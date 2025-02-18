@@ -12,13 +12,6 @@
     // determining if a command word is recognized (yes or no)
     // responnding accodingly to the command word (changing LED colour/serial prints)
 
-  //-------------------------OPERATIONS-------------------------------
-
-    // ENUM CLASS: setup finite state machine
-
-    // ------------------SETUP-----------------
-
-
 #include <TensorFlowLite.h>
 
 #include "audio_provider.h"
