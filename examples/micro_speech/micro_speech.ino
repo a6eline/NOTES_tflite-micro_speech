@@ -1,17 +1,23 @@
-/* Copyright 2023 The TensorFlow Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+// THESE ARE NOTES FOR ME TO INVESTIGATE THE LIBRARY/EXAMPLES FOR MY OWN USE 
 
-    http://www.apache.org/licenses/LICENSE-2.0
+//---------------------------------------------------------------micro_speech.ino------------------------------------------------------------------------------------------------
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-==============================================================================*/
+  //-------------------------FILE-OVERVIEW-------------------------------
+
+    // setting up tensorflow lite micro interpreter to process audio
+    // capturing audio input from the MP34DT06JTR microphone 
+    // extracting relevent features like spectrogram
+    // running inference using tensorflow lite model 
+    // determining if a command word is recognized (yes or no)
+    // responnding accodingly to the command word (changing LED colour/serial prints)
+
+  //-------------------------OPERATIONS-------------------------------
+
+    // ENUM CLASS: setup finite state machine
+
+    // ------------------SETUP-----------------
+
 
 #include <TensorFlowLite.h>
 
@@ -30,33 +36,37 @@ limitations under the License.
 
 #undef PROFILE_MICRO_SPEECH
 
-// Globals, used for compatibility with Arduino-style sketches.
-namespace {
-const tflite::Model* model = nullptr;
-tflite::MicroInterpreter* interpreter = nullptr;
-TfLiteTensor* model_input = nullptr;
-FeatureProvider* feature_provider = nullptr;
-RecognizeCommands* recognizer = nullptr;
-int32_t previous_time = 0;
+//---------------------------------------------------------------------GLOBALS ----------------------------------------------------------------------------------------------
 
-// Create an area of memory to use for input, output, and intermediate arrays.
-// The size of this will depend on the model you're using, and may need to be
-// determined by experimentation.
-constexpr int kTensorArenaSize = 10 * 1024;
-// Keep aligned to 16 bytes for CMSIS
-alignas(16) uint8_t tensor_arena[kTensorArenaSize];
-int8_t feature_buffer[kFeatureElementCount];
-int8_t* model_input_buffer = nullptr;
+// ------------------------NAMESPACE-------------------------------
+
+// these are pointers to key objects in the tensorflow lite micro system
+namespace {
+const tflite::Model* model = nullptr;             // model            -> holds the tflite model
+tflite::MicroInterpreter* interpreter = nullptr;  // interpreter      -> responsible for running the model
+TfLiteTensor* model_input = nullptr;              // model_input      -> holds the input tensor for feeding into the model
+FeatureProvider* feature_provider = nullptr;      // feature_provider -> converts raw audio into features suitable for the model 
+RecognizeCommands* recognizer = nullptr;          // recognizer       -> helps classify commands based on model output
+int32_t previous_time = 0;                        // previous_time    -> keeps track of time progression for audio processing
+
+constexpr int kTensorArenaSize = 10 * 1024;       // tensor_arean     -> memory buffer for storing model inputs, outputs and intermediate values
+                                                  // The size of this will depend on the model you're using, and may need to be determined by experimentation.    
+// Keep aligned to 16 bytes for CMSIS 
+alignas(16) uint8_t tensor_arena[kTensorArenaSize]; 
+int8_t feature_buffer[kFeatureElementCount];      // feature_buffer   -> stores extracted audio features before they are fed into th emodel
+int8_t* model_input_buffer = nullptr;             // model_input_buffer -> used to pass feature data into the model
 }  // namespace
 
-// The name of this function is important for Arduino compatibility.
-void setup() {
-  tflite::InitializeTarget();
 
-  // Map the model into a usable data structure. This doesn't involve any
-  // copying or parsing, it's a very lightweight operation.
-  model = tflite::GetModel(g_model);
-  if (model->version() != TFLITE_SCHEMA_VERSION) {
+//---------------------------------------------------------------------SETUP----------------------------------------------------------------------------------------------
+
+void setup() {
+  tflite::InitializeTarget(); // initialises the tensorflow lite micro system for the hardware
+
+  //------------------------------------------MAPPING-MODEL---------------------------------------
+  // Map the model into a usable data structure. This doesn't involve any copying or parsing, it's a very lightweight operation.
+  model = tflite::GetModel(g_model); // g_model -> defined elsewhere
+  if (model->version() != TFLITE_SCHEMA_VERSION) {  // checks compatibility with the TFLite version
     MicroPrintf(
         "Model provided is schema version %d not equal "
         "to supported version %d.",
@@ -64,27 +74,26 @@ void setup() {
     return;
   }
 
+  //----------------------------------------REGISTER-OPERATIONS------------------------------------
+
   // Pull in only the operation implementations we need.
-  // This relies on a complete list of all the ops needed by this graph.
-  // An easier approach is to just use the AllOpsResolver, but this will
-  // incur some penalty in code space for op implementations that are not
-  // needed by this graph.
+  // This relies on a complete list of all the ops needed by this graph. An easier approach is to just use the AllOpsResolver, 
+  // but this will incur some penalty in code space for op implementations that are not needed by this graph.
   //
   // tflite::AllOpsResolver resolver;
   // NOLINTNEXTLINE(runtime-global-variables)
   static tflite::MicroMutableOpResolver<4> micro_op_resolver;
-  if (micro_op_resolver.AddDepthwiseConv2D() != kTfLiteOk) {
+  if (micro_op_resolver.AddDepthwiseConv2D() != kTfLiteOk) {  // DepthwiseConv2D  -> convolution layer
+    return;
+  } if (micro_op_resolver.AddFullyConnected() != kTfLiteOk) { // FullyConnected   -> dense layer
+    return;
+  } if (micro_op_resolver.AddSoftmax() != kTfLiteOk) {        // Softmax -> classification function
+    return;
+  } if (micro_op_resolver.AddReshape() != kTfLiteOk) {        // Reshape -> adjusting tensor shapes
     return;
   }
-  if (micro_op_resolver.AddFullyConnected() != kTfLiteOk) {
-    return;
-  }
-  if (micro_op_resolver.AddSoftmax() != kTfLiteOk) {
-    return;
-  }
-  if (micro_op_resolver.AddReshape() != kTfLiteOk) {
-    return;
-  }
+
+  //-------------------------------------------INTEPRETER-------------------------------------------
 
   // Build an interpreter to run the model with.
   static tflite::MicroInterpreter static_interpreter(
@@ -108,39 +117,43 @@ void setup() {
     return;
   }
   model_input_buffer = model_input->data.int8;
+  
+  //-------------------------------------------AUDIO-------------------------------------------
 
   // Prepare to access the audio spectrograms from a microphone or other source
   // that will provide the inputs to the neural network.
   // NOLINTNEXTLINE(runtime-global-variables)
-  static FeatureProvider static_feature_provider(kFeatureElementCount,
-                                                 feature_buffer);
-  feature_provider = &static_feature_provider;
+  static FeatureProvider static_feature_provider(kFeatureElementCount, feature_buffer);
+  feature_provider = &static_feature_provider; // FeatureProvider^ -> extracts audio files 
 
-  static RecognizeCommands static_recognizer;
+  static RecognizeCommands static_recognizer; // RecognizeCommands -> processes model ouputs
   recognizer = &static_recognizer;
 
   previous_time = 0;
 
-  // start the audio
+  // start "recording" the audio from mic input
   TfLiteStatus init_status = InitAudioRecording();
   if (init_status != kTfLiteOk) {
     MicroPrintf("Unable to initialize audio");
     return;
   }
-
   MicroPrintf("Initialization complete");
-}
 
-// The name of this function is important for Arduino compatibility.
+} //setup()
+
+//---------------------------------------------------------------------VOICE-REC-LOOP----------------------------------------------------------------------------------------------
+
 void loop() {
+
 #ifdef PROFILE_MICRO_SPEECH
-  const uint32_t prof_start = millis();
-  static uint32_t prof_count = 0;
-  static uint32_t prof_sum = 0;
-  static uint32_t prof_min = std::numeric_limits<uint32_t>::max();
-  static uint32_t prof_max = 0;
+  const uint32_t  prof_start  = millis();
+  static uint32_t prof_count  = 0;
+  static uint32_t prof_sum    = 0;
+  static uint32_t prof_min    = std::numeric_limits<uint32_t>::max();
+  static uint32_t prof_max    = 0;
 #endif  // PROFILE_MICRO_SPEECH
 
+  //---------------------------------------GET-LATEST-AUDIO----------------------------------------
   // Fetch the spectrogram for the current time.
   const int32_t current_time = LatestAudioTimestamp();
   int how_many_new_slices = 0;
@@ -150,6 +163,7 @@ void loop() {
     MicroPrintf("Feature generation failed");
     return;
   }
+  
   previous_time += how_many_new_slices * kFeatureSliceStrideMs;
   // If no new audio samples have been received since last time, don't bother
   // running the network model.
