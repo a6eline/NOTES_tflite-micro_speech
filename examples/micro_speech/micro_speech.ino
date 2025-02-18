@@ -27,7 +27,7 @@
 #include "tensorflow/lite/micro/system_setup.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
-#undef PROFILE_MICRO_SPEECH
+#undef PROFILE_MICRO_SPEECH // use #define to enable performance profiling
 
 //---------------------------------------------------------------------GLOBALS ----------------------------------------------------------------------------------------------
 
@@ -138,8 +138,10 @@ void setup() {
 
 void loop() {
 
+//---------------------------------------PERFORMANCE-PROFILE----------------------------------------
+// profile the performance of the program only if defined
 #ifdef PROFILE_MICRO_SPEECH
-  const uint32_t  prof_start  = millis();
+  const  uint32_t prof_start  = millis();
   static uint32_t prof_count  = 0;
   static uint32_t prof_sum    = 0;
   static uint32_t prof_min    = std::numeric_limits<uint32_t>::max();
@@ -164,6 +166,7 @@ void loop() {
     return;
   }
 
+  //---------------------------------------RUN-MODEL----------------------------------------
   // Copy feature buffer to input tensor
   for (int i = 0; i < kFeatureElementCount; i++) {
     model_input_buffer[i] = feature_buffer[i];
@@ -176,6 +179,7 @@ void loop() {
     return;
   }
 
+  //-------------------------------------ANALYSE-OUTPUT--------------------------------------
   // Obtain a pointer to the output tensor
   TfLiteTensor* output = interpreter->output(0);
   // Determine whether a command was recognized based on the output of inference
@@ -191,22 +195,23 @@ void loop() {
   // Do something based on the recognized command. The default implementation
   // just prints to the error console, but you should replace this with your
   // own function for a real application.
+  
+  //-------------------------------------RESPOND-TO-OUTPUT--------------------------------------
   RespondToCommand(current_time, found_command, score, is_new_command);
 
+//---------------------------------------PERFORMANCE-PROFILE----------------------------------------
 #ifdef PROFILE_MICRO_SPEECH
   const uint32_t prof_end = millis();
   if (++prof_count > 10) {
     uint32_t elapsed = prof_end - prof_start;
     prof_sum += elapsed;
+
     if (elapsed < prof_min) {
       prof_min = elapsed;
-    }
-    if (elapsed > prof_max) {
+    } if (elapsed > prof_max) {
       prof_max = elapsed;
-    }
-    if (prof_count % 300 == 0) {
-      MicroPrintf("## time: min %dms  max %dms  avg %dms", prof_min, prof_max,
-                  prof_sum / prof_count);
+    } if (prof_count % 300 == 0) {
+      MicroPrintf("## time: min %dms  max %dms  avg %dms", prof_min, prof_max, prof_sum / prof_count);
     }
   }
 #endif  // PROFILE_MICRO_SPEECH
