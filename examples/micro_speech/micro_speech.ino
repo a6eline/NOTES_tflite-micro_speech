@@ -4,7 +4,6 @@
 //---------------------------------------------------------------micro_speech.ino------------------------------------------------------------------------------------------------
 
   //-------------------------FILE-OVERVIEW-------------------------------
-
     // setting up tensorflow lite micro interpreter to process audio
     // capturing audio input from the MP34DT06JTR microphone 
     // extracting relevent features like spectrogram
@@ -27,12 +26,11 @@
 #include "tensorflow/lite/micro/system_setup.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 
-#undef PROFILE_MICRO_SPEECH // use #define to enable performance profiling
+#undef PROFILE_MICRO_SPEECH // use #define to enable performance profiling, #undef to remove
 
 //---------------------------------------------------------------------GLOBALS ----------------------------------------------------------------------------------------------
 
 // ------------------------NAMESPACE-------------------------------
-
 // these are pointers to key objects in the tensorflow lite micro system
 namespace {
 const tflite::Model* model = nullptr;             // model            -> holds the tflite model

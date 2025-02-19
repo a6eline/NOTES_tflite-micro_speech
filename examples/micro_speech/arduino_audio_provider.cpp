@@ -1,28 +1,26 @@
-/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+// THESE ARE NOTES FOR ME TO INVESTIGATE THE LIBRARY/EXAMPLES FOR MY OWN USE 
 
-    http://www.apache.org/licenses/LICENSE-2.0
+//---------------------------------------------------------------arduino_audio_provider.cpp------------------------------------------------------------------------------------------------
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-==============================================================================*/
+  //-------------------------FILE-OVERVIEW-------------------------------
+    
+    //
 
+
+//---------------------------------------------------------------------PREPROCESSOR ----------------------------------------------------------------------------------------------
+// checks that certain code is only included for non- nano 33 BLE boards
+// if the board is a nano 33 BLE, then it defines ARDUINO_EXCLUDE_CODE
 #if defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
 #define ARDUINO_EXCLUDE_CODE
 #endif  // defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
 
 #ifndef ARDUINO_EXCLUDE_CODE
 
-#include <algorithm>
-#include <cmath>
+#include <algorithm>  // standard C++ library used for algorithm sorting 
+#include <cmath>      // for mathematical functions like square root/trig
+#include "PDM.h"      // for the microphone interface
 
-#include "PDM.h"
 #include "audio_provider.h"
 #include "micro_features_micro_model_settings.h"
 #include "tensorflow/lite/micro/micro_log.h"
@@ -30,34 +28,47 @@ limitations under the License.
 
 using namespace test_over_serial;
 
+//---------------------------------------------------------------------GLOBALS ----------------------------------------------------------------------------------------------
+
 namespace {
-bool g_is_audio_initialized = false;
+bool g_is_audio_initialized = false; // FLAG TO TRACK IF SYSTEM HAS BEEN INITIALISED
+
+//---------------------------BUFFER-----------------------------------
 // An internal buffer able to fit 16x our sample size
-constexpr int kAudioCaptureBufferSize = DEFAULT_PDM_BUFFER_SIZE * 16;
-int16_t g_audio_capture_buffer[kAudioCaptureBufferSize];
+constexpr int kAudioCaptureBufferSize = DEFAULT_PDM_BUFFER_SIZE * 16; // kAudioCaptureBufferSize  -> This constant defines the size of the audio buffer. 
+                                                                      // It’s set to be 16 times the DEFAULT_PDM_BUFFER_SIZE, 
+                                                                      // meaning the buffer can hold multiple audio samples to handle continuous capture.
+//-------------------------AUDIO-FILES---------------------------------
+int16_t g_audio_capture_buffer[kAudioCaptureBufferSize];        // g_audio_capture_buffer   -> for raw audio files
 // A buffer that holds our output
-int16_t g_audio_output_buffer[kMaxAudioSampleSize];
-// Mark as volatile so we can check in a while loop to see if
-// any samples have arrived yet.
-volatile int32_t g_latest_audio_timestamp = 0;
+int16_t g_audio_output_buffer[kMaxAudioSampleSize];             // g_audio_output_buffer    -> for processed audio samples to be used by the model
+
+//------------------------AUDIO-TIMESTAMP------------------------------
+// Mark as volatile so we can check in a while loop to see if any samples have arrived yet.
+volatile int32_t g_latest_audio_timestamp = 0;                  // g_test_audio_timestamp -> timestamp to hold the time of the latest audio sample in mills
+
+//--------------------------TEST-SAMPLE---------------------------------
 // test_over_serial sample index
-uint32_t g_test_sample_index;
+uint32_t g_test_sample_index;                                   // g_test_sample_index -> used to handle test samples during serial comm testing
 // test_over_serial silence insertion flag
-bool g_test_insert_silence = true;
+bool g_test_insert_silence = true;                              // g_test_insert_silence -> flag to test mode to determine whether silence should be inserted 
 }  // namespace
 
+
+//-------------------------------------------------------------------CaptureSamples------------------------------------------------------------------------------------------------
+// arduino_audio_provider.cpp --> reads audio sample files using PDM, processes them and stores it within a buffer. also updates the audio timestamp
 void CaptureSamples() {
-  // This is how many bytes of new data we have each time this is called
-  const int number_of_samples = DEFAULT_PDM_BUFFER_SIZE / 2;
-  // Calculate what timestamp the last audio sample represents
-  const int32_t time_in_ms =
+  const int number_of_samples = DEFAULT_PDM_BUFFER_SIZE / 2; // This is how many bytes of new data we have each time this is called
+
+  const int32_t time_in_ms = // Calculate what timestamp the last audio sample represents
       g_latest_audio_timestamp +
       (number_of_samples / (kAudioSampleFrequency / 1000));
-  // Determine the index, in the history of all samples, of the last sample
-  const int32_t start_sample_offset =
+
+  const int32_t start_sample_offset = // Determine the index, in the history of all samples, of the last sample
       g_latest_audio_timestamp * (kAudioSampleFrequency / 1000);
-  // Determine the index of this sample in our ring buffer
-  const int capture_index = start_sample_offset % kAudioCaptureBufferSize;
+
+  const int capture_index = start_sample_offset % kAudioCaptureBufferSize; // Determine the index of this sample in our ring buffer
+  
   // Read the data to the correct place in our buffer
   int num_read =
       PDM.read(g_audio_capture_buffer + capture_index, DEFAULT_PDM_BUFFER_SIZE);
