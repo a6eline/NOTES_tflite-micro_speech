@@ -11,6 +11,8 @@
     // determining if a command word is recognized (yes or no)
     // responnding accodingly to the command word (changing LED colour/serial prints)
 
+
+//---------------------------------------------------------------------PREPROCESSOR ----------------------------------------------------------------------------------------------
 #include <TensorFlowLite.h>
 
 #include "audio_provider.h"
@@ -39,7 +41,6 @@ TfLiteTensor* model_input = nullptr;              // model_input      -> holds t
 FeatureProvider* feature_provider = nullptr;      // feature_provider -> converts raw audio into features suitable for the model 
 RecognizeCommands* recognizer = nullptr;          // recognizer       -> helps classify commands based on model output
 int32_t previous_time = 0;                        // previous_time    -> keeps track of time progression for audio processing
-
 constexpr int kTensorArenaSize = 10 * 1024;       // tensor_arean     -> memory buffer for storing model inputs, outputs and intermediate values
                                                   // The size of this will depend on the model you're using, and may need to be determined by experimentation.    
 // Keep aligned to 16 bytes for CMSIS 
@@ -158,8 +159,7 @@ void loop() {
   }
   
   previous_time += how_many_new_slices * kFeatureSliceStrideMs;
-  // If no new audio samples have been received since last time, don't bother
-  // running the network model.
+  // If no new audio samples have been received since last time, don't bother running the network model.
   if (how_many_new_slices == 0) {
     return;
   }
