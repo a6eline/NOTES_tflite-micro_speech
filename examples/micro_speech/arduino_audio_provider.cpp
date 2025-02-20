@@ -9,22 +9,21 @@
 
 
 //---------------------------------------------------------------------PREPROCESSOR ----------------------------------------------------------------------------------------------
-// checks that certain code is only included for non- nano 33 BLE boards
-// if the board is a nano 33 BLE, then it defines ARDUINO_EXCLUDE_CODE
-#if defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
-#define ARDUINO_EXCLUDE_CODE
+
+#if defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE) // if the board is ARDUINO, but NOT the NANO33BLE
+#define ARDUINO_EXCLUDE_CODE // then define this
 #endif  // defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
 
-#ifndef ARDUINO_EXCLUDE_CODE
+#ifndef ARDUINO_EXCLUDE_CODE // executes below IF this macro is not defined. 
 
 #include <algorithm>  // standard C++ library used for algorithm sorting 
 #include <cmath>      // for mathematical functions like square root/trig
 #include "PDM.h"      // for the microphone interface
 
-#include "audio_provider.h"
-#include "micro_features_micro_model_settings.h"
-#include "tensorflow/lite/micro/micro_log.h"
-#include "test_over_serial/test_over_serial.h"
+#include "audio_provider.h"                       // for audio processing????
+#include "micro_features_micro_model_settings.h"  // contains settings for model features
+#include "tensorflow/lite/micro/micro_log.h"      // helps log info for debugging
+#include "test_over_serial/test_over_serial.h"    // handles testing functionality through serial
 
 using namespace test_over_serial;
 
@@ -56,6 +55,7 @@ bool g_test_insert_silence = true;                              // g_test_insert
 
 
 //-------------------------------------------------------------------CaptureSamples------------------------------------------------------------------------------------------------
+
 // arduino_audio_provider.cpp --> reads audio sample files using PDM, processes them and stores it within a buffer. also updates the audio timestamp
 void CaptureSamples() {
   const int number_of_samples = DEFAULT_PDM_BUFFER_SIZE / 2; // This is how many bytes of new data we have each time this is called
@@ -83,6 +83,9 @@ void CaptureSamples() {
   g_latest_audio_timestamp = time_in_ms;
 }
 
+//-------------------------------------------------------------------InitAudioRecording------------------------------------------------------------------------------------------------
+
+// arduino_audio_provider.cpp --> initializes the PDM mic to start recieving audio data. 
 TfLiteStatus InitAudioRecording() {
   if (!g_is_audio_initialized) {
     // Hook up the callback that will be called with each sample
@@ -100,6 +103,10 @@ TfLiteStatus InitAudioRecording() {
   return kTfLiteOk;
 }
 
+
+//-------------------------------------------------------------------GetAudioSamples------------------------------------------------------------------------------------------------
+
+// arduino_audio_provider.cpp --> retrieves audio samples from the capture buffer for a specific time window
 TfLiteStatus GetAudioSamples(int start_ms, int duration_ms,
                              int* audio_samples_size, int16_t** audio_samples) {
   // This next part should only be called when the main thread notices that the
@@ -129,6 +136,8 @@ TfLiteStatus GetAudioSamples(int start_ms, int duration_ms,
 
   return kTfLiteOk;
 }
+
+//-------------------------------------------------------------------n------------------------------------------------------------------------------------------------
 
 namespace {
 
