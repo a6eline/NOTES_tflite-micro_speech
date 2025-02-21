@@ -5,7 +5,7 @@ This repository is for me to write personal notes/documentation on the [LiteRT](
 ## Other Sources
 This is forked from the original [tflite-micro-arduino-examples](https://github.com/tensorflow/tflite-micro-arduino-examples) GitHub repository. Installation info is all there. 
 
-The [TennsorFlow Lite Micro Documentation]([https://github.com/tensorflow/tflite-micro-arduino-examples](https://ai.google.dev/edge/litert/microcontrollers/get_started)) will say it needs a C++17 enviroment, but you dont need to adjust the Nano 33 BLE board package's platform.txt file for it manually with -std=gnu++17 etc. Theres no need to install a tool chain for it either, it has worked for me if the board states it is C++14.
+The [TensorFlow Lite Micro Documentation]([https://github.com/tensorflow/tflite-micro-arduino-examples](https://ai.google.dev/edge/litert/microcontrollers/get_started)) will say it needs a C++17 enviroment, but you dont need to adjust the Nano 33 BLE board package's platform.txt file for it manually with -std=gnu++17 etc. Theres no need to install a tool chain for it either, this should work even if the board states it is C++14.
 
 ## My Contribution
 
@@ -16,7 +16,7 @@ Within the examples folder, I have written as much comments as I can within [mic
 ![image](https://github.com/user-attachments/assets/f1715457-ae6d-41f7-94eb-e8597615af4c)
 
 ### Micro_speech Documentation 
-I have also written a [word documentation](https://docs.google.com/document/d/1WiQw86Ue8yddEHVPHRZVkMrpHQOxgGgfX3WtC2Yl9dU/edit?tab=t.hnpsgq8m388t) for this so that I can gain better understanding of it. Theres also 
+I have also written a [word documentation](https://docs.google.com/document/d/1WiQw86Ue8yddEHVPHRZVkMrpHQOxgGgfX3WtC2Yl9dU/edit?tab=t.hnpsgq8m388t) for this so that I can gain better understanding of it. 
 
 ![image](https://github.com/user-attachments/assets/4a807bc8-bafc-44bb-bc2a-81c570f3ed14)
 
