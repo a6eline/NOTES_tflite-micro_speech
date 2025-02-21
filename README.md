@@ -10,4 +10,4 @@ This is forked from the original [tflite-micro-arduino-examples](https://github.
 Within the examples folder, I have written as much comments as I can to better understand each file and its usages. 
 
 ### Micro_speech Documentation 
-I have also written a [word documentation](https://github.com/tensorflow/tflite-micro-arduino-examples) for this so that I can gain better understanding of it. 
+I have also written a [word documentation](https://docs.google.com/document/d/1WiQw86Ue8yddEHVPHRZVkMrpHQOxgGgfX3WtC2Yl9dU/edit?tab=t.hnpsgq8m388t) for this so that I can gain better understanding of it. 
