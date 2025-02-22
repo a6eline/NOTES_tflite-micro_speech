@@ -18,7 +18,7 @@ Within the examples folder, I have written as much comments as I can within [mic
 ![image](https://github.com/user-attachments/assets/f1715457-ae6d-41f7-94eb-e8597615af4c)
 
 ### Micro_speech Documentation 
-I have also written a [word documentation](https://docs.google.com/document/d/1WiQw86Ue8yddEHVPHRZVkMrpHQOxgGgfX3WtC2Yl9dU/edit?tab=t.hnpsgq8m388t) for this so that I can gain better understanding of it. 
+I have also written a [word documentation](https://docs.google.com/document/) for this so that I can gain better understanding of it. 
 
 ![image](https://github.com/user-attachments/assets/4a807bc8-bafc-44bb-bc2a-81c570f3ed14)
 
