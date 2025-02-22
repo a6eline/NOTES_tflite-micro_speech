@@ -1,12 +1,15 @@
 
 // THESE ARE NOTES FOR ME TO INVESTIGATE THE LIBRARY/EXAMPLES FOR MY OWN USE 
 
-//---------------------------------------------------------------arduino_audio_provider.cpp------------------------------------------------------------------------------------------------
+//==================================================================== arduino_audio_provider.cpp ====================================================================
 
   //-------------------------FILE-OVERVIEW-------------------------------
-    // this file contains all the uses the PDM library 
-    // capturing and processing audio samples 
-    // vital for micro_speech as it initializes the audio system
+    // handles audio input using PDM microphone 
+    // initializes the microphone
+    // captures audio samples
+    // processes them
+    // makes them available for the TensorFlow Lite inferene
+    // also supports serial communication
 
 
 //---------------------------------------------------------------------PREPROCESSOR ----------------------------------------------------------------------------------------------
@@ -31,7 +34,7 @@ using namespace test_over_serial;
 //---------------------------------------------------------------------GLOBALS ----------------------------------------------------------------------------------------------
 
 namespace {
-bool g_is_audio_initialized = false; // FLAG TO TRACK IF SYSTEM HAS BEEN INITIALISED
+bool g_is_audio_initialized = false; // flag to track if the microphone has been initalized
 
 //---------------------------BUFFER-----------------------------------
 // An internal buffer able to fit 16x our sample size
@@ -40,7 +43,6 @@ constexpr int kAudioCaptureBufferSize = DEFAULT_PDM_BUFFER_SIZE * 16; // kAudioC
                                                                       // meaning the buffer can hold multiple audio samples to handle continuous capture.
 //-------------------------AUDIO-FILES---------------------------------
 int16_t g_audio_capture_buffer[kAudioCaptureBufferSize];        // g_audio_capture_buffer   -> for raw audio files
-// A buffer that holds our output
 int16_t g_audio_output_buffer[kMaxAudioSampleSize];             // g_audio_output_buffer    -> for processed audio samples to be used by the model
 
 //------------------------AUDIO-TIMESTAMP------------------------------
@@ -59,7 +61,7 @@ bool g_test_insert_silence = true;                              // g_test_insert
 
 // arduino_audio_provider.cpp --> reads audio sample files using PDM, processes them and stores it within a buffer. also updates the audio timestamp
 void CaptureSamples() {
-  const int number_of_samples = DEFAULT_PDM_BUFFER_SIZE / 2; // This is how many bytes of new data we have each time this is called
+  const int number_of_samples = DEFAULT_PDM_BUFFER_SIZE / 2; // This is how many bytes of new data we have each time this is called 
 
   const int32_t time_in_ms = // Calculate what timestamp the last audio sample represents
       g_latest_audio_timestamp +
@@ -71,11 +73,10 @@ void CaptureSamples() {
   const int capture_index = start_sample_offset % kAudioCaptureBufferSize; // Determine the index of this sample in our ring buffer
   
   // Read the data to the correct place in our buffer
-  int num_read =
-      PDM.read(g_audio_capture_buffer + capture_index, DEFAULT_PDM_BUFFER_SIZE);
+  int num_read = PDM.read(g_audio_capture_buffer + capture_index, DEFAULT_PDM_BUFFER_SIZE);
+
   if (num_read != DEFAULT_PDM_BUFFER_SIZE) {
-    MicroPrintf("### short read (%d/%d) @%dms", num_read,
-                DEFAULT_PDM_BUFFER_SIZE, time_in_ms);
+    MicroPrintf("### short read (%d/%d) @%dms", num_read, DEFAULT_PDM_BUFFER_SIZE, time_in_ms);
     while (true) {
       // NORETURN
     }
@@ -138,10 +139,11 @@ TfLiteStatus GetAudioSamples(int start_ms, int duration_ms,
   return kTfLiteOk;
 }
 
-//-------------------------------------------------------------------n------------------------------------------------------------------------------------------------
 
 namespace {
+//-------------------------------------------------------------------InsertSilence------------------------------------------------------------------------------------------------
 
+// arduino_audio_provider.cpp --> insert zero values into the buffer for test mode. 
 void InsertSilence(const size_t len, int16_t value) {
   for (size_t i = 0; i < len; i++) {
     const size_t index = (g_test_sample_index + i) % kAudioCaptureBufferSize;
@@ -150,6 +152,9 @@ void InsertSilence(const size_t len, int16_t value) {
   g_test_sample_index += len;
 }
 
+//-------------------------------------------------------------------ProcessTestInput------------------------------------------------------------------------------------------------
+
+// arduino_audio_provider.cpp --> handles test mode input through serial communication
 int32_t ProcessTestInput(TestOverSerial& test) {
   constexpr size_t samples_16ms = ((kAudioSampleFrequency / 1000) * 16);
 
@@ -187,6 +192,9 @@ int32_t ProcessTestInput(TestOverSerial& test) {
 
 }  // namespace
 
+//-------------------------------------------------------------------LatestAudioTimestamp------------------------------------------------------------------------------------------------
+
+// arduino_audio_provider.cpp --> returns latest timestamp, handling both normal and test mode.
 int32_t LatestAudioTimestamp() {
   TestOverSerial& test = TestOverSerial::Instance(kAUDIO_PCM_16KHZ_MONO_S16);
   if (!test.IsTestMode()) {
