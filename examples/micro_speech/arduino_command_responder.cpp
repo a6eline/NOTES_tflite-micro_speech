@@ -1,17 +1,14 @@
-/* Copyright 2022 The TensorFlow Authors. All Rights Reserved.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+// THESE ARE NOTES FOR ME TO INVESTIGATE THE LIBRARY/EXAMPLES FOR MY OWN USE 
 
-    http://www.apache.org/licenses/LICENSE-2.0
+//==================================================================== arduino_command_responder.cpp ====================================================================
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-==============================================================================*/
+  //-------------------------FILE-OVERVIEW-------------------------------
+    // this file only has one function
+    // the function's purpose is to take in the recognised command word 
+    // and output varied LED colours based on the first index of the string
+
+//---------------------------------------------------------------------PREPROCESSOR ----------------------------------------------------------------------------------------------
 
 #if defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)
 #define ARDUINO_EXCLUDE_CODE
@@ -23,10 +20,13 @@ limitations under the License.
 #include "command_responder.h"
 #include "tensorflow/lite/micro/micro_log.h"
 
-// Toggles the built-in LED every inference, and lights a colored LED depending
-// on which word was detected.
-void RespondToCommand(int32_t current_time, const char* found_command,
-                      uint8_t score, bool is_new_command) {
+//-------------------------------------------------------------------RespondToCommand------------------------------------------------------------------------------------------------
+
+// arduino_command_responder.cpp --> toggles the built-in LED based on the command word
+void RespondToCommand(int32_t current_time, const char* found_command, uint8_t score, bool is_new_command) {
+  
+  //-------------------------statics---------------------------------
+  // this is global only when it is used - it will only be done once. 
   static bool is_initialized = false;
   if (!is_initialized) {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -42,9 +42,11 @@ void RespondToCommand(int32_t current_time, const char* found_command,
     digitalWrite(LEDB, HIGH);
     is_initialized = true;
   }
+  //-------------------------statics---------------------------------
   static int32_t last_command_time = 0;
   static int count = 0;
 
+  //-------------------------change-LED-------------------------------
   if (is_new_command) {
     MicroPrintf("Heard %s (%d) @%dms", found_command, score, current_time);
     // If we hear a command, light up the appropriate LED
@@ -65,6 +67,7 @@ void RespondToCommand(int32_t current_time, const char* found_command,
     last_command_time = current_time;
   }
 
+  //-----------------------turn-off-LED-------------------------------
   // If last_command_time is non-zero but was >3 seconds ago, zero it
   // and switch off the LED.
   if (last_command_time != 0) {
@@ -76,6 +79,7 @@ void RespondToCommand(int32_t current_time, const char* found_command,
     }
   }
 
+  //-------------------------toggle-LED---------------------------------
   // Otherwise, toggle the LED every time an inference is performed.
   ++count;
   if (count & 1) {
