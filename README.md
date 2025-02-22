@@ -2,6 +2,7 @@
 
 This repository is for me to write personal notes/documentation on the [LiteRT](https://ai.google.dev/edge/litert/inference) Arduino's micro_speech example and other files which are required for it. The intention of this is to study the TensorFlow API so I can impement it within AI projects in the future. I am uploading this so that both me and my project partner can understand further how to implement the API onto our [Alarm Clock Project](https://github.com/a6eline/ML_arduino_alarm) using the Nano 33 BLE Sense Rev2 board. Hopefully the notes will be of some use for others who want to use speech recognition within microcotrollers with TensorFlow Lite Micro.
 
+Don't download repo from here, some files were deleted as it is just for notetaking, download from original repo.
 > Status: Ongoing
 
 ## Other Sources
