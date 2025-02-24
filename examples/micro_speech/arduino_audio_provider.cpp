@@ -24,7 +24,7 @@
 #include <cmath>      // for mathematical functions like square root/trig
 #include "PDM.h"      // for the microphone interface
 
-#include "audio_provider.h"                       // for audio processing????
+#include "audio_provider.h"                       // its header file
 #include "micro_features_micro_model_settings.h"  // contains settings for model features
 #include "tensorflow/lite/micro/micro_log.h"      // helps log info for debugging
 #include "test_over_serial/test_over_serial.h"    // handles testing functionality through serial
