@@ -38,8 +38,7 @@
 // Configure FFT to output 16 bit fixed point.
 #define FIXED_POINT 16
 
-// ------------------------DESTRUCTOR-------------------------------
-
+// ------------------------NAMESPACE-------------------------------
 namespace {
 FrontendState g_micro_features_state; // stores the settings/configurations of the microphone's pre-processing
                                       // struct FrontendState is from the file: 

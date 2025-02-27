@@ -8,6 +8,14 @@
     // the function's purpose is to take in the recognised command word 
     // and output varied LED colours based on the first index of the string
 
+  //-------------------------MODIFICATIONS-------------------------------
+    // leave all parameters and branches alone
+    // modify the found_command[0] letter recognition
+    // if the first letters are the same (on and off)... 
+      // ...perhaps strcmp instead or look at the second index. 
+    
+    
+
 //---------------------------------------------------------------------PREPROCESSOR ----------------------------------------------------------------------------------------------
 
 #if defined(ARDUINO) && !defined(ARDUINO_ARDUINO_NANO33BLE)

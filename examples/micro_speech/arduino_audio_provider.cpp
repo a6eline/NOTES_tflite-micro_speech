@@ -1,6 +1,8 @@
 
 // THESE ARE NOTES FOR ME TO INVESTIGATE THE LIBRARY/EXAMPLES FOR MY OWN USE 
 
+// MODIFICATIONS: NOT NEEDED
+
 //==================================================================== arduino_audio_provider.cpp ====================================================================
 
   //-------------------------FILE-OVERVIEW-------------------------------
@@ -10,7 +12,6 @@
     // processes them
     // makes them available for the TensorFlow Lite inferene
     // also supports serial communication
-
 
 //---------------------------------------------------------------------PREPROCESSOR ----------------------------------------------------------------------------------------------
 
