@@ -21,7 +21,7 @@
 
 //---------------------------------------------------------------------RecognizeCommands----------------------------------------------------------------------------------------------
 
-// CONSTRUCTOR: recognise_commands.cpp --> this stroes the user-defined settings, initialises previous (so we can compare) and starts with silence. 
+// CONSTRUCTOR: recognise_commands.cpp --> this stores the user-defined settings, initialises previous (so we can compare) and starts with silence. 
 RecognizeCommands::RecognizeCommands(int32_t average_window_duration_ms,  // average_window_duration_ms -> How long (ms) to average results to smooth out noise.
                                      uint8_t detection_threshold,         // detection_threshold        -> How confident the model needs to be before accepting a command.
                                      int32_t suppression_ms,              // suppression_ms             -> Time after a detection before allowing another command.
@@ -138,7 +138,7 @@ TfLiteStatus RecognizeCommands::ProcessLatestResults(const TfLiteTensor* latest_
   const char* current_top_label = kCategoryLabels[current_top_index];
 
 
-  // ------------------------CALCULATE-HIGHEST------------------------------
+  // ------------------------CONTROL-TIMING------------------------------
 
   // If we've recently had another label trigger, assume one that occurs too soon afterwards is a bad result.
   int64_t time_since_last_top;

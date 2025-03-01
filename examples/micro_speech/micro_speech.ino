@@ -107,8 +107,9 @@ void setup() {
   tflite::InitializeTarget(); // initialises the tensorflow lite micro system for the hardware
 
   //------------------------------------------MAPPING-MODEL---------------------------------------
+  
   // Map the model into a usable data structure. This doesn't involve any copying or parsing, it's a very lightweight operation.
-  model = tflite::GetModel(g_model); // g_model -> defined elsewhere
+  model = tflite::GetModel(g_model); // g_model -> defined in micro_features_model.cpp
   if (model->version() != TFLITE_SCHEMA_VERSION) {  // checks compatibility with the TFLite version
     MicroPrintf(
         "Model provided is schema version %d not equal "
@@ -161,7 +162,7 @@ void setup() {
   }
   model_input_buffer = model_input->data.int8;
   
-  //-------------------------------------------AUDIO-------------------------------------------
+  //-------------------------------------------FEATURE-------------------------------------------
 
   // Prepare to access the audio spectrograms from a microphone or other source
   // that will provide the inputs to the neural network.
@@ -169,10 +170,15 @@ void setup() {
   static FeatureProvider static_feature_provider(kFeatureElementCount, feature_buffer);
   feature_provider = &static_feature_provider; // FeatureProvider^ -> extracts audio files 
 
+
+  //-------------------------------------------RECOGNIZE-COMMANDS-------------------------------------------
+
   static RecognizeCommands static_recognizer; // RecognizeCommands -> processes model ouputs
   recognizer = &static_recognizer;
 
   previous_time = 0;
+
+  //-------------------------------------------MIC-RECORDING-------------------------------------------
 
   // start "recording" the audio from mic input
   TfLiteStatus init_status = InitAudioRecording();
@@ -189,6 +195,7 @@ void setup() {
 void loop() {
 
 //---------------------------------------PROFILE_MICRO_SPEECH----------------------------------------
+
 // profile the performance of the program only if defined
 #ifdef PROFILE_MICRO_SPEECH
   const  uint32_t prof_start  = millis();
@@ -199,6 +206,7 @@ void loop() {
 #endif  // PROFILE_MICRO_SPEECH
 
   //---------------------------------------GET-LATEST-AUDIO----------------------------------------
+
   // Fetch the spectrogram for the current time.
   const int32_t current_time = LatestAudioTimestamp();
   int how_many_new_slices = 0;
@@ -216,6 +224,7 @@ void loop() {
   }
 
   //---------------------------------------RUN-MODEL----------------------------------------
+
   // Copy feature buffer to input tensor
   for (int i = 0; i < kFeatureElementCount; i++) {
     model_input_buffer[i] = feature_buffer[i];
@@ -229,6 +238,7 @@ void loop() {
   }
 
   //-------------------------------------ANALYSE-OUTPUT--------------------------------------
+
   // Obtain a pointer to the output tensor
   TfLiteTensor* output = interpreter->output(0);
   // Determine whether a command was recognized based on the output of inference
@@ -246,9 +256,11 @@ void loop() {
   // own function for a real application.
   
   //-------------------------------------RESPOND-TO-OUTPUT--------------------------------------
+
   RespondToCommand(current_time, found_command, score, is_new_command); // from arduino_command_responder.cpp
 
 //---------------------------------------PROFILE_MICRO_SPEECH----------------------------------------
+
 #ifdef PROFILE_MICRO_SPEECH
   const uint32_t prof_end = millis();
   if (++prof_count > 10) {

@@ -119,14 +119,13 @@ TfLiteStatus GetAudioSamples(int start_ms, int duration_ms,
   // often enough and the buffer is large enough that this call will be made
   // before that happens.
 
-  // Determine the index, in the history of all samples, of the first
-  // sample we want
+  // Determine the index, in the history of all samples, of the first sample we want
   const int start_offset = start_ms * (kAudioSampleFrequency / 1000);
   // Determine how many samples we want in total
   const int duration_sample_count =
       duration_ms * (kAudioSampleFrequency / 1000);
   for (int i = 0; i < duration_sample_count; ++i) {
-    // For each sample, transform its index in the history of all samples into
+    // For each sammple, transform its index in the history of all samples into
     // its index in g_audio_capture_buffer
     const int capture_index = (start_offset + i) % kAudioCaptureBufferSize;
     // Write the sample to the output buffer
